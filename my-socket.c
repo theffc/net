@@ -1,8 +1,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <string.h>
 
-##ifndef LOCALHOST
+#ifndef LOCALHOST
 #define LOCALHOST "127.0.0.1"
 #endif
 
