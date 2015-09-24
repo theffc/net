@@ -9,6 +9,7 @@
 #define PATH 1
 #define PORT 2
 #define BUFFER 1000000
+#define HTTP_SIZE 100
 
 // extern struct addrinfo hints;
 struct addrinfo hints;
@@ -140,7 +141,8 @@ int main(int argc, char const *argv[])
 		char answer[100000];
 		FILE *fd;
 		check_msg(buff, strlen(buff), path, host);
-		if (fd = fopen(path, "r") == NULL)
+		fd = fopen(path, "r");
+		if ( fd == NULL)
 		{
 			strcpy(answer, "HTTP/1.1 404 Not Found\r\nConnection: close\r\n");
 			send(new_sock, answer, strlen(answer), 0);
@@ -162,15 +164,21 @@ int main(int argc, char const *argv[])
 		lSize = ftell(fd);
 		printf("after tell\n");
 		rewind(fd);*/
+		//rewind(fd);
 		// allocate memory to contain the whole file:
+		printf("Tamanho = %d\n", sizeof(char)*lSize );
 		data = (char*) malloc (sizeof(char)*lSize);
 		if (data == NULL) {fputs ("Memory error",stderr); exit (2);}
 		printf("before copy\n");
 		// copy the file into the data:
-		result = fread (data,lSize, 1,fd);
-		if (result != lSize) {fputs ("Reading error",stderr); exit (3);}
+		result = fread (data, lSize, 1, fd);
+		//if (result != lSize) {fputs ("Reading error\n",stderr); exit (3);}
 		/* the whole file is now loaded in the memory data. */
 		// sends the file
+		printf("antes de mandar\n");
+		// packet = (char*) malloc(sizeof(char)*lSize + HTTP_SIZE);
+		// strcat(packet, "HTTP/1.1 200 OK\r\n");
+		// strcat(packet, "Content-leng")
 		send(new_sock, data, strlen(data), 0);
 		// terminate
 		fclose (fd);
