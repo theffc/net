@@ -1,5 +1,7 @@
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
@@ -23,35 +25,33 @@ public class CausalOrderRecv extends CausalOrder implements Runnable {
 
     @Override
     public void run() {
-        byte[] msg = new byte[MAX_BUF];
-        DatagramPacket pckt = new DatagramPacket(msg, MAX_BUF);
-        try {
-            sock.receive(pckt);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        VClockAndMsg map = VectorClock.parseFromMsg(pckt.getData());
-        msg = (byte[]) map.get("Message");
-        VectorClock peerVClock = (VectorClock) map.get("VectorClock");
-
-        int peerID = peerVClock.getNodeID();
-        Integer peerTime = peerVClock.getClock(peerID);
-        Integer myPeerTime = vClock.getClock(peerID);
-
-        waitQueue.add(peerVClock);
-        for (int i = 0; i < waitQueue.size(); i++) {
-            VectorClock vc = waitQueue.peek();
-            // decremento para facilitar a comparação
-            vc.lowerClock(peerID);
-            /* se o meu vClock ainda for menor que o do outro, tenho que continuar esperando os pacotes que ainda não chegaram */
-            if ( (vClock.compareTo(vc) == VectorClock.SMALLER) ) {
-                break;
+        while (true) {
+            byte[] msg = new byte[MAX_BUF];
+            DatagramPacket pckt = new DatagramPacket(msg, MAX_BUF);
+            try {
+                sock.receive(pckt);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            vc = waitQueue.remove();
-            vClock.update(vc);
-            appQueue.add(vc.getMsg());
-        }
-    }
+
+            VectorClock peerVClock = VectorClock.parseFromMsg(pckt.getData());
+            int peerID = peerVClock.getNodeID();
+
+            waitQueue.add(peerVClock);
+            for (int i = 0; i < waitQueue.size(); i++) {
+                VectorClock vc = waitQueue.peek();
+                // decremento para facilitar a comparação
+                vc.lowerClock(peerID);
+                /* se o meu vClock ainda for menor que o do outro, tenho que continuar esperando os pacotes que ainda não chegaram */
+                if ((vClock.compareTo(vc) == VectorClock.SMALLER)) {
+                    break;
+                }
+                vc = waitQueue.remove();
+                vClock.update(vc);
+                appQueue.add(vc.getMsg());
+            }// end for
+        }// end while
+    }// end run()
+
 }
 

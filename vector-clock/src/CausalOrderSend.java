@@ -20,7 +20,11 @@ public class CausalOrderSend extends CausalOrder implements Runnable{
             try {
                 byte[] msg = appQueue.take();
 
-                msg = vClock.include(msg);
+                synchronized (vClock) {
+                    vClock.update();
+                    vClock.setMsg(msg);
+                    msg = vClock.toByteArray();
+                }
                 DatagramPacket pckt = new DatagramPacket(msg, msg.length, Global.MCAST_GROUP, Global.MCAST_PORT);
                 sock.send(pckt);
             } catch (IOException | InterruptedException e) {

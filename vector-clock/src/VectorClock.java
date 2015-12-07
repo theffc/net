@@ -58,7 +58,16 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
         return clocks.get(myNode);
     }
 
-// -------- Updates -----------
+    public byte[] getMsg() {
+        return msg;
+    }
+
+    // -------- Updates -----------
+
+
+    public void setMsg(byte[] msg) {
+        this.msg = msg;
+    }
 
     public void lowerClock(int node) {
         clocks.set(node, clocks.get(node)-1);
@@ -79,7 +88,7 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
     
 //---------- Persistence --------------
 
-    public byte[] toByteArray(){
+    public synchronized byte[] toByteArray(){
         ByteArrayOutputStream baOut = new ByteArrayOutputStream();
         this.toStream(baOut);
         return baOut.toByteArray();
@@ -120,9 +129,12 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
         return out.toByteArray();
     }
 
-    public static VClockAndMsg parseFromMsg(byte[] bytesMsg) {
+    public static VectorClock parseFromMsg(byte[] bytesMsg) {
         VectorClock vClock;
-        String msgClock;
+        ByteArrayInputStream in = new ByteArrayInputStream(bytesMsg);
+        return VectorClock.fromStream(in);
+
+        /* String msgClock;
         String msg = Arrays.toString(bytesMsg);
         int i = msg.indexOf(separators);
 
@@ -132,7 +144,7 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
 
         msg = msg.substring(i);
 
-        return new VClockAndMsg(vClock, msg.getBytes());
+        return new VClockAndMsg(vClock, msg.getBytes()); */
     }
 
     /* public enum Compare {
@@ -147,7 +159,7 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
     public int compareTo(VectorClock vc) {
         boolean menor = false;
         boolean maior = false;
-        boolean igual = false
+        boolean igual = false;
         Integer a, b;
 
         for (int i = 0; i < clocks.size(); i++) {
@@ -170,7 +182,7 @@ public class VectorClock implements Serializable, Comparable<VectorClock> {
         }
         if (menor)
             return SMALLER;
-        if (igual)
+        // if (igual)
             return EQUALS;
     }
 }
