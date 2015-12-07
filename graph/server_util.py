@@ -1,6 +1,9 @@
 from my_socket import *
 from urllib.parse import *
 from graph import *
+from server import PATH
+import os
+import shutil
 
 
 # Constantes para status da resposta
@@ -13,7 +16,6 @@ LOCALHOST = socket.gethostname()
 
 
 graphs = dict()
-
 
 def client_handler(sock, addr):
     request = rcv_msg(sock)
@@ -43,28 +45,37 @@ def handle_request(request):
     # file = (aux[-1] if aux[-1] else aux[-2])
 
     if method == 'GET':
-        if path not in graphs:
+        if not os.path.exists(PATH + path):
             msg = make_response(STATUS_NOT_FOUND)
             return msg
-        body = graphs[path].mostrar()
+        if '/' not in path:
+            body = graph.load()
+        else:
+            body = open(path).read()
         msg = make_response(STATUS_OK, body)
         return msg
 
     elif method == 'HEAD':
-        if path in graphs:
-            msg = make_response(STATUS_OK)
-        else:
+        if not os.path.exists(PATH + path):
             msg = make_response(STATUS_NOT_FOUND)
+        else:
+            msg = make_response(STATUS_OK)
         return msg
 
     elif method == 'DELETE':
-        if path not in graphs:
+        if not os.path.exists(PATH + path):
             msg = make_response(STATUS_NOT_FOUND)
             return msg
-        del graphs[path]
-        return make_response(STATUS_OK, 'The graph *'+ path +'* has been deleted.')
+        if '/' not in path:
+            shutil.rmtree(PATH + path)
+        else:
+            os.remove(PATH + path)
+        return make_response(STATUS_OK, 'The resource *'+ path +'* has been deleted.')
 
     elif method == 'POST':
+        if os.path.exists(PATH + path):
+            if '/' in path: # trata de um recurso
+
         qs = (url.query if url.query else body)
         if path not in graphs:
             graphs[path] = Grafo()

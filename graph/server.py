@@ -3,6 +3,7 @@ from argparse import *
 import re
 from urllib.parse import *
 import threading
+import os.path
 
 from my_socket import *
 from server_util import *
@@ -26,14 +27,17 @@ PATH = args.path
 port = args.port
 
 
+if not os.path.exists(PATH):
+    print("Invalid Path!")
+    exit(1)
 
 # Criando e fazendo Binding de sockets
-listen_sock = make_socket(None, port, socket.socket.bind)
+sock_listen = make_socket(None, port, socket.socket.bind)
 # --------------------------------------
 
-listen_sock.listen(20)
+sock_listen.listen(20)
 while True:
-    (client_sock, client_addr) = listen_sock.accept()
-    client_handler(client_sock, client_addr)
+    (sock_client, client_addr) = sock_listen.accept()
+    client_handler(sock_client, client_addr)
 
 
