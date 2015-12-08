@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.MulticastSocket;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -7,10 +8,17 @@ import java.util.concurrent.BlockingQueue;
  */
 public class CausalOrderSend extends CausalOrder implements Runnable{
 
-    public CausalOrderSend(BlockingQueue<byte[]> appQueue, VectorClock vClock) {
-        super(appQueue, vClock);
+    public CausalOrderSend(BlockingQueue<byte[]> appQueue) {
+        super(appQueue);
+
+        try {
+            this.sock = new MulticastSocket();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         Thread t = new Thread(this);
+        t.setName("Sender");
         t.start();
     }
 
@@ -20,12 +28,11 @@ public class CausalOrderSend extends CausalOrder implements Runnable{
             try {
                 byte[] msg = appQueue.take();
 
-                synchronized (vClock) {
-                    vClock.update();
-                    vClock.setMsg(msg);
-                    msg = vClock.toByteArray();
-                }
-                DatagramPacket pckt = new DatagramPacket(msg, msg.length, Global.MCAST_GROUP, Global.MCAST_PORT);
+                VectorClock vClock = VectorClock.makeUpdate();
+                vClock.setMsg(msg);
+                msg = vClock.toByteArray();
+
+                DatagramPacket pckt = new DatagramPacket(msg, msg.length, MCAST_GROUP, MCAST_PORT);
                 sock.send(pckt);
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();

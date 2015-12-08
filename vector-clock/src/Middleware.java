@@ -11,12 +11,11 @@ import java.util.concurrent.SynchronousQueue;
  */
 public class Middleware {
 
-    VectorClock vClock;
     int nodeID;
     int numOfNodes;
 
-    private BlockingQueue<byte[]> recvQueue;
-    private BlockingQueue<byte[]> sendQueue;
+    public BlockingQueue<byte[]> recvQueue;
+    public BlockingQueue<byte[]> sendQueue;
 
 
     public Middleware(int numOfNodes, int nodeID) {
@@ -24,13 +23,12 @@ public class Middleware {
         this.nodeID = nodeID;
         this.numOfNodes = numOfNodes;
 
-        vClock = new VectorClock(numOfNodes, nodeID);
+        VectorClock.init(numOfNodes, nodeID);
         recvQueue = new LinkedBlockingQueue<byte[]>();
         sendQueue = new LinkedBlockingQueue<byte[]>();
 
-        Thread send, recv;
-        send = new Thread(new CausalOrderSend(sendQueue));
-        recv = new Thread(new CausalOrderRecv(recvQueue));
+        new CausalOrderSend(sendQueue);
+        new CausalOrderRecv(recvQueue);
 
     }
 
@@ -43,9 +41,11 @@ public class Middleware {
     public String recv() {
         try {
             byte[] by = recvQueue.take();
-            return Arrays.toString(by);
+            return new String(by);
         } catch (InterruptedException e) {
             e.printStackTrace();
+            System.exit(1);
+            return null;
         }
     }
 
@@ -53,7 +53,7 @@ public class Middleware {
     public String poll() {
         byte[] by = recvQueue.poll();
         if (by != null) {
-            return Arrays.toString(by);
+            return new String(by);
         }
         return null;
     }
